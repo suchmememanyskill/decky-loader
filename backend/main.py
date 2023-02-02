@@ -20,7 +20,7 @@ from aiohttp_jinja2 import setup as jinja_setup
 from browser import PluginBrowser
 from helpers import (REMOTE_DEBUGGER_UNIT, csrf_middleware, get_csrf_token,
                      get_home_path, get_homebrew_path, get_user, get_user_group,
-                     stop_systemd_unit, start_systemd_unit)
+                     stop_systemd_unit, start_systemd_unit, call)
 from injector import get_gamepadui_tab, Tab, get_tabs, close_old_tabs
 from loader import Loader
 from settings import SettingsManager

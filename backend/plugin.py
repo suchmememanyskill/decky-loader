@@ -1,20 +1,21 @@
 import multiprocessing
 from asyncio import (Lock, get_event_loop, new_event_loop,
-                     open_unix_connection, set_event_loop, sleep,
-                     start_unix_server, IncompleteReadError, LimitOverrunError)
+                     open_connection, set_event_loop, sleep,
+                     start_server, IncompleteReadError, LimitOverrunError)
 from concurrent.futures import ProcessPoolExecutor
 from importlib.util import module_from_spec, spec_from_file_location
 from json import dumps, load, loads
 from logging import getLogger
 from traceback import format_exc
-from os import path, setgid, setuid, environ
+from os import path, environ
 from signal import SIGINT, signal
 from sys import exit
 from time import time
 import helpers
 from updater import Updater
+import random
 
-multiprocessing.set_start_method("fork")
+# multiprocessing.set_start_method("fork")
 
 BUFFER_LIMIT = 2 ** 20  # 1 MiB
 
@@ -26,6 +27,8 @@ class PluginWrapper:
         self.reader = None
         self.writer = None
         self.socket_addr = f"/tmp/plugin_socket_{time()}"
+        self.host = "127.0.0.1"
+        self.port = random.sample(range(40000, 60000), 1)[0]
         self.method_call_lock = Lock()
 
         self.version = None
@@ -59,12 +62,15 @@ class PluginWrapper:
             set_event_loop(new_event_loop())
             if self.passive:
                 return
-            setgid(0 if "root" in self.flags else helpers.get_user_group_id())
-            setuid(0 if "root" in self.flags else helpers.get_user_id())
+            #setgid(0 if "root" in self.flags else helpers.get_user_group_id())
+            #setuid(0 if "root" in self.flags else helpers.get_user_id())
             # export a bunch of environment variables to help plugin developers
             environ["HOME"] = helpers.get_home_path("root" if "root" in self.flags else helpers.get_user())
             environ["USER"] = "root" if "root" in self.flags else helpers.get_user()
-            environ["DECKY_VERSION"] = helpers.get_loader_version()
+            try:
+                environ["DECKY_VERSION"] = helpers.get_loader_version()
+            except:
+                environ["DECKY_VERSION"] = "-1"
             environ["DECKY_USER"] = helpers.get_user()
             environ["DECKY_HOME"] = helpers.get_homebrew_path()
             environ["DECKY_PLUGIN_SETTINGS_DIR"] = path.join(environ["DECKY_HOME"], "settings", self.plugin_directory)
@@ -103,7 +109,7 @@ class PluginWrapper:
             exit(0)
 
     async def _setup_socket(self):
-        self.socket = await start_unix_server(self._listen_for_method_call, path=self.socket_addr, limit=BUFFER_LIMIT)
+        self.socket = await start_server(self._listen_for_method_call, host=self.host, port=self.port, limit=BUFFER_LIMIT)
 
     async def _listen_for_method_call(self, reader, writer):
         while True:
@@ -143,7 +149,7 @@ class PluginWrapper:
             retries = 0
             while retries < 10:
                 try:
-                    self.reader, self.writer = await open_unix_connection(self.socket_addr, limit=BUFFER_LIMIT)
+                    self.reader, self.writer = await open_connection(host=self.host, port=self.port, limit=BUFFER_LIMIT)
                     return True
                 except:
                     await sleep(2)

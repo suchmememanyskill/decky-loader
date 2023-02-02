@@ -6,11 +6,11 @@ from ensurepip import version
 from json.decoder import JSONDecodeError
 from logging import getLogger
 from os import getcwd, path, remove
-from subprocess import call
 
 from aiohttp import ClientSession, web
 
 import helpers
+from helpers import call
 from injector import get_gamepadui_tab, inject_to_tab
 from settings import SettingsManager
 

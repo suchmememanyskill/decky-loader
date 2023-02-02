@@ -1,8 +1,6 @@
 from json import dump, load
 from os import mkdir, path, listdir, rename
-from shutil import chown
-
-from helpers import get_home_path, get_homebrew_path, get_user, get_user_group, get_user_owner
+from helpers import get_home_path, get_homebrew_path, get_user, get_user_group, get_user_owner, chown
 
 
 class SettingsManager:

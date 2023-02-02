@@ -12,12 +12,11 @@ from io import BytesIO
 from logging import getLogger
 from os import R_OK, W_OK, path, rename, listdir, access, mkdir
 from shutil import rmtree
-from subprocess import call
 from time import time
 from zipfile import ZipFile
 
 # Local modules
-from helpers import get_ssl_context, get_user, get_user_group, download_remote_binary_to_path
+from helpers import get_ssl_context, get_user, get_user_group, download_remote_binary_to_path, call
 from injector import get_gamepadui_tab
 
 logger = getLogger("Browser")
