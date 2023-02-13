@@ -28,8 +28,9 @@ from loader import Loader
 from settings import SettingsManager
 from updater import Updater
 from utilities import Utilities
-from localplatform import service_stop, service_start
+from localplatform import service_stop, service_start, get_username
 from customtypes import UserType
+from plugin import PluginWrapper
 
 HOMEBREW_PATH = get_homebrew_path()
 CONFIG = {
@@ -181,4 +182,21 @@ if __name__ == "__main__":
 
     loop = new_event_loop()
     set_event_loop(loop)
-    PluginManager(loop).run()
+
+    force_plugin = None
+    force_plugin_port = None
+
+    try:
+        idx_plugin = sys.orig_argv.index("--plugin")
+        force_plugin = sys.orig_argv[idx_plugin + 1]
+
+        idx_port = sys.orig_argv.index("--plugin-port")
+        force_plugin_port = sys.orig_argv[idx_port + 1]
+    except:
+        pass
+
+    if (force_plugin != None):
+        plugin = PluginWrapper(path.join(CONFIG["plugin_path"], force_plugin, "main.py"), force_plugin, CONFIG["plugin_path"], force_plugin_port)
+        plugin._init()
+    else:
+        PluginManager(loop).run()

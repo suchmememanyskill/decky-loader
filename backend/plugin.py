@@ -14,14 +14,16 @@ from localsocket import LocalSocket
 from localplatform import setgid, setuid, get_username, get_home_path
 from customtypes import UserType
 import helpers
+import platform
+import ctypes
 
 class PluginWrapper:
-    def __init__(self, file, plugin_directory, plugin_path) -> None:
+    def __init__(self, file, plugin_directory, plugin_path, connection : str = None) -> None:
         self.file = file
         self.plugin_path = plugin_path
         self.plugin_directory = plugin_directory
         self.method_call_lock = Lock()
-        self.socket = LocalSocket(self._on_new_message)
+        self.socket = LocalSocket(self._on_new_message, connection)
 
         self.version = None
 
@@ -53,30 +55,18 @@ class PluginWrapper:
             set_event_loop(new_event_loop())
             if self.passive:
                 return
-            setgid(UserType.ROOT if "root" in self.flags else UserType.HOST_USER)
-            setuid(UserType.ROOT if "root" in self.flags else UserType.HOST_USER)
-            # export a bunch of environment variables to help plugin developers
-            environ["HOME"] = get_home_path(UserType.ROOT if "root" in self.flags else UserType.HOST_USER)
-            environ["USER"] = "root" if "root" in self.flags else get_username()
-            
-            try:
-                loader_ver = helpers.get_loader_version()
-            except:
-                loader_ver = "-1"
 
-            environ["DECKY_VERSION"] = loader_ver
-            environ["DECKY_USER"] = get_username()
-            environ["DECKY_HOME"] = helpers.get_homebrew_path()
-            environ["DECKY_PLUGIN_SETTINGS_DIR"] = path.join(environ["DECKY_HOME"], "settings", self.plugin_directory)
-            helpers.mkdir_as_user(environ["DECKY_PLUGIN_SETTINGS_DIR"])
-            environ["DECKY_PLUGIN_RUNTIME_DIR"] = path.join(environ["DECKY_HOME"], "data", self.plugin_directory)
-            helpers.mkdir_as_user(environ["DECKY_PLUGIN_RUNTIME_DIR"])
-            environ["DECKY_PLUGIN_LOG_DIR"] = path.join(environ["DECKY_HOME"], "logs", self.plugin_directory)
-            helpers.mkdir_as_user(environ["DECKY_PLUGIN_LOG_DIR"])
-            environ["DECKY_PLUGIN_DIR"] = path.join(self.plugin_path, self.plugin_directory)
-            environ["DECKY_PLUGIN_NAME"] = self.name
-            environ["DECKY_PLUGIN_VERSION"] = self.version
-            environ["DECKY_PLUGIN_AUTHOR"] = self.author
+            if platform.system() == "Windows":
+                pass
+            else: # Only linux supports setting user during process runtime
+                setgid(UserType.ROOT if "root" in self.flags else UserType.HOST_USER)
+                setuid(UserType.ROOT if "root" in self.flags else UserType.HOST_USER)
+                
+                # export a bunch of environment variables to help plugin developers
+                env = self._get_env()
+                for x in env:
+                    environ[x] = env[x]
+        
             spec = spec_from_file_location("_", self.file)
             module = module_from_spec(spec)
             spec.loader.exec_module(module)
@@ -89,6 +79,33 @@ class PluginWrapper:
         except:
             self.log.error("Failed to start " + self.name + "!\n" + format_exc())
             exit(0)
+    
+    def _get_env(self) -> dict:
+        env = {}
+
+        env["HOME"] = get_home_path(UserType.ROOT if "root" in self.flags else UserType.HOST_USER)
+        env["USER"] = "root" if "root" in self.flags else get_username()
+        
+        try:
+            loader_ver = helpers.get_loader_version()
+        except:
+            loader_ver = "-1"
+
+        env["DECKY_VERSION"] = loader_ver
+        env["DECKY_USER"] = get_username()
+        env["DECKY_HOME"] = helpers.get_homebrew_path()
+        env["DECKY_PLUGIN_SETTINGS_DIR"] = path.join(env["DECKY_HOME"], "settings", self.plugin_directory)
+        helpers.mkdir_as_user(env["DECKY_PLUGIN_SETTINGS_DIR"])
+        env["DECKY_PLUGIN_RUNTIME_DIR"] = path.join(env["DECKY_HOME"], "data", self.plugin_directory)
+        helpers.mkdir_as_user(env["DECKY_PLUGIN_RUNTIME_DIR"])
+        env["DECKY_PLUGIN_LOG_DIR"] = path.join(env["DECKY_HOME"], "logs", self.plugin_directory)
+        helpers.mkdir_as_user(env["DECKY_PLUGIN_LOG_DIR"])
+        env["DECKY_PLUGIN_DIR"] = path.join(self.plugin_path, self.plugin_directory)
+        env["DECKY_PLUGIN_NAME"] = self.name
+        env["DECKY_PLUGIN_VERSION"] = self.version
+        env["DECKY_PLUGIN_AUTHOR"] = self.author
+
+        return env
 
     async def _unload(self):
         try:
@@ -126,7 +143,12 @@ class PluginWrapper:
     def start(self):
         if self.passive:
             return self
-        multiprocessing.Process(target=self._init).start()
+
+        if platform.system() == "Windows":
+            
+            pass
+        else:
+            multiprocessing.Process(target=self._init).start()
         return self
 
     def stop(self):
