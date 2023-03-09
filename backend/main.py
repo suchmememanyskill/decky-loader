@@ -28,8 +28,6 @@ from updater import Updater
 from utilities import Utilities
 import helpers
 
-USER = get_user()
-GROUP = get_user_group()
 CONFIG = {
     "plugin_path": getenv("PLUGIN_PATH", "/home/.decky/plugins"),
     "settings_path": getenv("SETTINGS_PATH", "/home/.decky/settings"),
@@ -44,6 +42,8 @@ CONFIG = {
 }
 
 helpers.EFFECTIVE_USER = CONFIG["effective_user"]
+USER = get_user()
+GROUP = get_user_group()
 
 basicConfig(
     level=CONFIG["log_level"],
