@@ -26,12 +26,14 @@ from loader import Loader
 from settings import SettingsManager
 from updater import Updater
 from utilities import Utilities
+import helpers
 
 USER = get_user()
 GROUP = get_user_group()
-HOMEBREW_PATH = get_homebrew_path()
 CONFIG = {
-    "plugin_path": getenv("PLUGIN_PATH", path.join(HOMEBREW_PATH, "plugins")),
+    "plugin_path": getenv("PLUGIN_PATH", "/home/.decky/plugins"),
+    "settings_path": getenv("SETTINGS_PATH", "/home/.decky/settings"),
+    "effective_user": getenv("EFFECTIVE_USER", "deck"),
     "chown_plugin_path": getenv("CHOWN_PLUGIN_PATH", "1") == "1",
     "server_host": getenv("SERVER_HOST", "127.0.0.1"),
     "server_port": int(getenv("SERVER_PORT", "1337")),
@@ -40,6 +42,8 @@ CONFIG = {
         getenv("LOG_LEVEL", "INFO")
     ],
 }
+
+helpers.EFFECTIVE_USER = CONFIG["effective_user"]
 
 basicConfig(
     level=CONFIG["log_level"],
@@ -71,7 +75,7 @@ class PluginManager:
         })
         self.plugin_loader = Loader(self.web_app, CONFIG["plugin_path"], self.loop, CONFIG["live_reload"])
         self.plugin_browser = PluginBrowser(CONFIG["plugin_path"], self.plugin_loader.plugins, self.plugin_loader)
-        self.settings = SettingsManager("loader", path.join(HOMEBREW_PATH, "settings"))
+        self.settings = SettingsManager("loader", CONFIG["settings_path"])
         self.utilities = Utilities(self)
         self.updater = Updater(self)
 

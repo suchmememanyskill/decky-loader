@@ -16,6 +16,7 @@ from aiohttp.web import Response, middleware
 from aiohttp import ClientSession
 
 REMOTE_DEBUGGER_UNIT = "steam-web-debug-portforward.service"
+EFFECTIVE_USER = None
 
 # global vars
 csrf_token = str(uuid.uuid4())
@@ -42,16 +43,11 @@ def set_user():
 
 # Get the user id hosting the plugin loader
 def get_user_id() -> int:
-    proc_path = os.path.realpath(sys.argv[0])
-    pws = sorted(pwd.getpwall(), reverse=True, key=lambda pw: len(pw.pw_dir))
-    for pw in pws:
-        if proc_path.startswith(os.path.realpath(pw.pw_dir)):
-            return pw.pw_uid
-    raise PermissionError("The plugin loader does not seem to be hosted by any known user.")
+    return pwd.getpwnam(EFFECTIVE_USER).pw_uid
 
 # Get the user hosting the plugin loader
 def get_user() -> str:
-    return pwd.getpwuid(get_user_id()).pw_name
+    return EFFECTIVE_USER
 
 # Get the effective user id of the running process
 def get_effective_user_id() -> int:
