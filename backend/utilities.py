@@ -197,8 +197,8 @@ class Utilities:
             elif include_files:
                 files.append(x)
 
-        files = sorted([x for x in files], key=lambda x: x.name)
-        folders = sorted([x for x in folders], key=lambda x: x.name)
+        files = sorted(files, key=lambda x: x.name)
+        folders = sorted(folders, key=lambda x: x.name)
         all = [{ "isdir": x.is_dir(), "name": x.name, "realpath": x.path } for x in folders + files]
 
         return {
