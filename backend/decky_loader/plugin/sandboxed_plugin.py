@@ -77,9 +77,13 @@ class SandboxedPlugin:
                 environ["DECKY_PLUGIN_VERSION"] = self.version
             environ["DECKY_PLUGIN_AUTHOR"] = self.author
 
+            self.log.info("HELLOOOOO THIS IS THE RIGHT BUILD!!")
+            print("HELLOOOOO THIS IS THE RIGHT BUILD!!")
+            self.log.info(str(sysmodules))
+
             # append the plugin's `py_modules` to the recognized python paths
             syspath.append(path.join(environ["DECKY_PLUGIN_DIR"], "py_modules"))
-
+            
             #TODO: FIX IN A LESS CURSED WAY
             keys = [key for key in sysmodules if key != None and key.startswith("decky_loader.")]
             for key in keys:

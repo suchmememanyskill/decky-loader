@@ -219,6 +219,10 @@ class PluginManager:
 def main():
     setproctitle(f"Decky Loader {get_loader_version()} ({getproctitle()})")
     setthreadtitle("Decky Loader")
+
+    print("HELLOOOOO THIS IS THE RIGHT BUILD!!")
+    logger.info("HELLOOOOO THIS IS THE RIGHT BUILD!!")
+
     if ON_WINDOWS:
         # Fix windows/flask not recognising that .js means 'application/javascript'
         import mimetypes
