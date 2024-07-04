@@ -81,7 +81,7 @@ class SandboxedPlugin:
             syspath.append(path.join(environ["DECKY_PLUGIN_DIR"], "py_modules"))
 
             #TODO: FIX IN A LESS CURSED WAY
-            keys = [key for key in sysmodules if key.startswith("decky_loader.")]
+            keys = [key for key in sysmodules if key != None and key.startswith("decky_loader.")]
             for key in keys:
                 sysmodules[key.replace("decky_loader.", "")] = sysmodules[key]
             
