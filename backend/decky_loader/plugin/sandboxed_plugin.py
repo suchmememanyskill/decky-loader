@@ -77,6 +77,8 @@ class SandboxedPlugin:
                 environ["DECKY_PLUGIN_VERSION"] = self.version
             environ["DECKY_PLUGIN_AUTHOR"] = self.author
 
+            from .imports import decky
+
             # append the plugin's `py_modules` to the recognized python paths
             syspath.append(path.join(environ["DECKY_PLUGIN_DIR"], "py_modules"))
 
@@ -85,7 +87,6 @@ class SandboxedPlugin:
             for key in keys:
                 sysmodules[key.replace("decky_loader.", "")] = sysmodules[key]
             
-            from .imports import decky
             async def emit(event: str, *args: Any) -> None:
                 await self._socket.write_single_line_server(dumps({
                     "type": SocketMessageType.EVENT,
